@@ -9,7 +9,10 @@ on:
 jobs:
   renew:
     runs-on: ubuntu-latest
-
+    permissions:
+      actions: write  
+      contents: read
+    
     steps:
     - uses: actions/checkout@v4
 
@@ -341,10 +344,29 @@ jobs:
         name: screenshots
         path: screenshots/
         
-    - name: Delete old workflow runs
-      uses: MajorScruffy/delete-old-workflow-runs@v0.3.0
+    # 新增：清理历史运行记录
+    - name: Clean up old workflow runs
+      if: always()
       env:
-        GITHUB_TOKEN: ${{ github.token }}
-      with:
-        repository: ${{ github.repository }}
-        older-than-seconds: 3600
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        REPO="${{ github.repository }}"
+        CURRENT_RUN_ID="${{ github.run_id }}"
+        echo "清理仓库 $REPO 中除当前运行 ($CURRENT_RUN_ID) 之外的所有运行记录..."
+
+        page=1
+        while true; do
+          runs=$(gh api "repos/$REPO/actions/runs?per_page=100&page=$page" --jq '.workflow_runs[] | {id: .id}')
+          count=$(echo "$runs" | jq -s 'length')
+          if [ "$count" -eq 0 ]; then
+            break
+          fi
+          echo "$runs" | jq -r '.id' | while read run_id; do
+            if [ "$run_id" != "$CURRENT_RUN_ID" ]; then
+              echo "删除运行记录 ID: $run_id"
+              gh api -X DELETE "repos/$REPO/actions/runs/$run_id" --silent || echo "删除 $run_id 失败"
+            fi
+          done
+          page=$((page+1))
+        done
+        echo "清理完成"

@@ -464,7 +464,7 @@ def _open_renew_modal(sb) -> bool:
     """)
     time.sleep(0.8)
     renew_btn.click()
-    print("🖱️  已点击 Renew 按钮，等待 ALTCHA 验证框...")
+    print("🖱️ 已点击 Renew 按钮，等待 ALTCHA 验证框...")
     time.sleep(3)
 
     try:

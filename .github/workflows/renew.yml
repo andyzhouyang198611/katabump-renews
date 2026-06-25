@@ -48,7 +48,7 @@ jobs:
 
         url = os.environ.get("NODE_LINK", "").strip()
         if not url:
-            print("[ERROR] NODE_LINK 为空")
+            print("[ERROR] NODE_LINK 为空，将使用 GitHub Actions 本地网络直连。")
             sys.exit(1)
 
         if url.startswith("vless://"):
